@@ -1,0 +1,22 @@
+Performing 1000000 randomized tests...
+Finished running tests
+Results for model:
+  Average error/distance: 0.000325355
+  Variance:               1.58772e-07
+  Maximum error:          0.00589392
+  Minimum error:          1.7173e-08
+  Total time:             327.383 ms
+  ns/trial:               327.383
+Results for step size of 10:
+  Average error/distance: 0.000206366
+  Variance:               3.37581e-07
+  Maximum error:          0.00841316
+  Minimum error:          4.76702e-16
+  Total time:             4857.5 ms
+  ns/trial:               4857.5
+  Total steps:            73633749
+  ns/step:                65.9684
+On average...
+The model produced an error 1.5766 times larger
+The model was 14.8374 times faster
+Average jump distance was 733.765
