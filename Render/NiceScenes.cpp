@@ -17,9 +17,9 @@ void accretion_disk4() {
   Vector3d dir = Vector3d(0.5, 0.0, -1.0);
   Vector3d up = Vector3d(0.0, 1.0, 0.0);
   const double fov = 22.5;
-  Camera camera = Camera(pos, dir, up, 4096, 2160, 10.0, fov);
-  camera.xsamples = 4;
-  camera.ysamples = 4;
+  Camera camera = Camera(pos, dir, up, 1920, 1080, 10.0, fov);
+  camera.xsamples = 2;
+  camera.ysamples = 2;
   s.camera = camera;
 
   const double rs = 5.0;
@@ -29,8 +29,8 @@ void accretion_disk4() {
   Disk disk = Disk(Point3d(), Vector3d(0.0, 1.0, 0.0), Vector3d(1.0, 0.0, 0.0), rs * 3.0, rs * 10.0, "Textures/adisk3.png");
   Sphere jupiter = Sphere(Point3d(17.0, 3.5, 3.0), 0.75, "Textures/jupiter2k.png");
   jupiter.setAxis(-IN, RIGHT);
-  jupiter.material.ambient = 0.0f;
-  jupiter.material.diffuse = 0.7f;
+  //jupiter.material.ambient = 0.0f;
+  //jupiter.material.diffuse = 0.7f;
 
   s.addObject(disk);
   s.addObject(jupiter);
@@ -40,11 +40,11 @@ void accretion_disk4() {
   RayTracer::diffuse_samples = 256;
 
   Timer t;
-  RayTracer::render(0.2, 29.9, ACCEL_PATH_TRACE, 32);
-  PostProcessor::Bloom(RayTracer::pixel_buffer, camera.xres, camera.yres, 50.0, 2.5, 4.0);
+  RayTracer::render(0.05, 29.9, ACCEL_RAY_TRACE, 32);
+  //PostProcessor::Bloom(RayTracer::pixel_buffer, camera.xres, camera.yres, 50.0, 2.5, 4.0);
   std::cout << "Rendered in ";
   t.print_elapsed_time();
-  RayTracer::write("Renders/Disk4/disk4.png");
+  RayTracer::write("Renders/Disk4/disk4-2.png");
 }
 
 void accretion_disk3() {
@@ -80,7 +80,7 @@ void accretion_disk3() {
   const int fps = 30;
   const int duration = 60;
   const int nf = fps * duration;
-  const int offset = 199;
+  const int offset = 16 * 30;
 
   LightPath::LoadModel();
   RayTracer::load_scene(s);
@@ -94,7 +94,7 @@ void accretion_disk3() {
       sprintf(filename, "%s/Desktop/Renders/Disk3/frame%d.png", HOME, i);
       Timer t;
 
-      RayTracer::render(0.025, 29.9, ACCEL_PATH_TRACE, 32);
+      RayTracer::render(0.0025, 29.9, ACCEL_PATH_TRACE, 32);
       PostProcessor::Bloom(RayTracer::pixel_buffer, camera.xres, camera.yres, 30.0, 1.0, 2.0);
 
       std::cout << "Rendered frame " << i << " in ";
@@ -147,7 +147,7 @@ void accretion_disk2() {
   RayTracer::load_scene(s);
 
   Timer t;
-  RayTracer::render(0.2, 29.9, ACCEL_RAY_TRACE, 32);
+  RayTracer::render(0.05, 29.9, ACCEL_RAY_TRACE, 32);
   PostProcessor::Bloom(RayTracer::pixel_buffer, camera.xres, camera.yres, 50.0, 0.75, 4.0);
   std::cout << "Rendered in ";
   t.print_elapsed_time();

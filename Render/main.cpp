@@ -23,9 +23,9 @@ int main(int argc, char **argv) {
   //orbit3();
   //orbit4();
   //orbit5();
-  //accretion_disk2();
+  accretion_disk2();
   //accretion_disk3();
-  accretion_disk4();
+  //accretion_disk4();
 
   return 0;
 }
@@ -63,7 +63,7 @@ void accretion_disk1() {
   LightPath::LoadModel();
 
   t.reset();
-  RayTracer::render(0.2, 29.9, ACCEL_RAY_TRACE, 1);
+  RayTracer::render(0.05, 29.9, ACCEL_RAY_TRACE, 1);
   std::cout << "Rendered in ";
   t.print_elapsed_time();
 
@@ -104,14 +104,14 @@ void einstein_ring1() {
   LightPath::LoadModel();
 
   t.reset();
-  RayTracer::render(0.2, 29.9, ACCEL_RAY_TRACE, 1);
+  RayTracer::render(0.05, 29.9, ACCEL_RAY_TRACE, 1);
   std::cout << "Rendered in ";
   t.print_elapsed_time();
 
   RayTracer::write("Renders/ERing1/ring_accel.png");
 
   t.reset();
-  RayTracer::render(1.0, 29.9, EULER_RAY_TRACE, 1);
+  RayTracer::render(1.5, 29.9, EULER_RAY_TRACE, 1);
   std::cout << "Rendered in ";
   t.print_elapsed_time();
   RayTracer::write("Renders/ERing1/ring_euler2.png");

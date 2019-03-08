@@ -113,14 +113,14 @@ void RayTracer::render_section(const int xmin, const int ymin, const int width, 
           Ray ray(scene->camera.pos, (p - scene->camera.pos).normalize());
           Sphere range = Sphere(scene->metric.origin, scene->metric.rs * soi_range);
 
-          if (mode == EULER_RAY_TRACE) {
-            euler_ray_trace(ray, dt, range, color);
+          if (mode == EULER_RAY_TRACE || mode == EULER_PATH_TRACE) {
+            euler_ray_trace(ray, dt, range, color, mode);
           } else if (mode == ACCEL_RAY_TRACE || mode == ACCEL_PATH_TRACE) {
             accel_ray_trace(ray, dt, range, color, mode);
           } else {
             assert(false);
           }
-
+          
           /*if (i == 630 || j == 700) {
             color[0] = 255.0f;
             color[1] = 0.0f;
@@ -136,9 +136,9 @@ void RayTracer::render_section(const int xmin, const int ymin, const int width, 
 
       //exit(0);
 
-      pixel_buffer[i][j][0] = MIN(255, total_color[0] / nsamples);
-      pixel_buffer[i][j][1] = MIN(255, total_color[1] / nsamples);
-      pixel_buffer[i][j][2] = MIN(255, total_color[2] / nsamples);
+      pixel_buffer[i][j][0] = MIN(255.0f, total_color[0] / nsamples);
+      pixel_buffer[i][j][1] = MIN(255.0f, total_color[1] / nsamples);
+      pixel_buffer[i][j][2] = MIN(255.0f, total_color[2] / nsamples);
 
     }
   }
@@ -159,7 +159,7 @@ void RayTracer::accel_ray_trace(Ray &ray, const double dt, const Sphere &range, 
   double limit;
   if (!(range.intersects(ray, limit) && range.radius > 0.0)) {
     // if the ray does not intersect the sphere of influence we can trace it indefinitely
-    if (trace_partial_ray(ray, 1e20, temp_color)) {
+    if (trace_partial_ray(ray, 1e20, temp_color, mode)) {
       memcpy(color, temp_color, sizeof(Color));
     }
 
@@ -169,7 +169,8 @@ void RayTracer::accel_ray_trace(Ray &ray, const double dt, const Sphere &range, 
   // update the ray's origin to the limit
   ray.O = ray.O + ray.D * limit;
 accel:
-  double t, jump_dist, min_t;
+  double t, jump_dist;
+  // double min_t;
   double dist_to_origin;
   bool intersection_found = false;
   Ray intersecting_ray, step_ray;
@@ -196,7 +197,7 @@ accel:
 
 
     jump_dist = 1e20;
-    min_t = 1e20;
+    //min_t = 1e20;
     closest = NULL;
 
     // Go through each of the objects and find the closest one
@@ -220,8 +221,10 @@ accel:
       }
     }
 
+    const double actual_dt = scene->metric.get_step_size(dt, ray);
+
     // if we weren't able to jump, step using Euler's method
-    if (!scene->metric.step(dt, ray, step_ray)) {
+    if (!scene->metric.step(actual_dt, ray, step_ray)) {
       return;
     } else if (closest == NULL) {
       continue;
@@ -229,8 +232,8 @@ accel:
 
     // check for an intersection
 
-    if (closest->intersects(step_ray, dt, t, temp_material) && t < min_t) {
-      min_t = t;
+    if (closest->intersects(step_ray, actual_dt, t, temp_material) /* && t < min_t */) {
+      //min_t = t;
       material = temp_material;
       intersection_found = true;
       ray.O = step_ray.O + step_ray.D * t;
@@ -249,7 +252,7 @@ accel:
   // if the ray never intersected an object or the event horizon
   // we need to trace it outside of the sphere of influence
   if (intersection_found == false) {
-    if (trace_partial_ray(ray, 1e20, temp_color)) {
+    if (trace_partial_ray(ray, 1e20, temp_color, mode)) {
       memcpy(color, temp_color, sizeof(Color));
     }
 
@@ -313,10 +316,10 @@ accel:
 
 }
 
-void RayTracer::euler_ray_trace(Ray &ray, const double dt, const Sphere &range, Color color) {
-  color[0] = 0;
-  color[1] = 0;
-  color[2] = 0;
+void RayTracer::euler_ray_trace(Ray &ray, const double dt, const Sphere &range, Color color, const int mode) {
+  color[0] = 0.0f;
+  color[1] = 0.0f;
+  color[2] = 0.0f;
   double t;
   Color temp_color;
   Material material;
@@ -329,7 +332,7 @@ void RayTracer::euler_ray_trace(Ray &ray, const double dt, const Sphere &range, 
   double limit;
   if (!(range.intersects(ray, limit) && range.radius > 0.0)) {
     // if the ray does not intersect the sphere of influence we can trace it indefinitely
-    if (trace_partial_ray(ray, 1e20, temp_color))
+    if (trace_partial_ray(ray, 1e20, temp_color, mode))
       memcpy(color, temp_color, sizeof(Color));
 
     return;
@@ -354,11 +357,38 @@ euler:
         continue;
 
       if ((*it)->intersects(step_ray, actual_dt, t, material)) {
-        const float diff = MAX(0.0f, material.diffuse * -(material.normal * material.lighting));
+        ray.O = step_ray.O + step_ray.D * t;
+        ray.D = step_ray.D;
 
-        color[0] = material.color[0] * (material.ambient + diff) * material.opacity;
-        color[1] = material.color[1] * (material.ambient + diff) * material.opacity;
-        color[2] = material.color[2] * (material.ambient + diff) * material.opacity;
+        color[0] = material.color[0] * material.ambient * material.opacity;
+        color[1] = material.color[1] * material.ambient * material.opacity;
+        color[2] = material.color[2] * material.ambient * material.opacity;
+
+        if (mode == EULER_RAY_TRACE) {
+          const float diff = MAX(0.0f, material.diffuse * -(material.normal * material.lighting));
+
+          color[0] += material.color[0] * diff * material.opacity;
+          color[1] += material.color[1] * diff * material.opacity;
+          color[2] += material.color[2] * diff * material.opacity;
+        } else if (mode == EULER_PATH_TRACE && material.diffuse > 0.0f) {
+          Ray reflected;
+          Color diff = {0.0f, 0.0f, 0.0f};
+          for (int i = 0; i < diffuse_samples; i++) {
+            reflected.D = Vector3d::rand_weighted_unit_vec_in_hemisphere(material.normal);
+            reflected.O = ray.O + reflected.D * EPSILON;
+
+            euler_ray_trace(reflected, dt, range, temp_color, mode);
+            //const double cos_theta = reflected.D * material.normal;
+            diff[0] += (temp_color[0] / 255.0f) * material.color[0] * material.diffuse * material.opacity * M_PI;
+            diff[1] += (temp_color[1] / 255.0f) * material.color[1] * material.diffuse * material.opacity * M_PI;
+            diff[2] += (temp_color[2] / 255.0f) * material.color[2] * material.diffuse * material.opacity * M_PI;
+          }
+
+          color[0] += diff[0] / diffuse_samples;
+          color[1] += diff[1] / diffuse_samples;
+          color[2] += diff[2] / diffuse_samples;
+
+        }
 
         if (material.specular > 0.0f) {
           Ray reflected;
@@ -366,7 +396,7 @@ euler:
           reflected.D = step_ray.D - material.normal * 2.0 * (step_ray.D * material.normal);
           reflected.O = reflected.O + reflected.D * EPSILON;
 
-          euler_ray_trace(reflected, dt, range, temp_color);
+          euler_ray_trace(reflected, dt, range, temp_color, mode);
 
           color[0] += temp_color[0] * material.specular;
           color[1] += temp_color[1] * material.specular;
@@ -378,7 +408,7 @@ euler:
           return;
 
         Ray newRay = Ray(step_ray.O + step_ray.D * (t + EPSILON), step_ray.D);
-        euler_ray_trace(newRay, dt, range, temp_color);
+        euler_ray_trace(newRay, dt, range, temp_color, mode);
 
         color[0] += temp_color[0] * (1.0 - material.opacity);
         color[1] += temp_color[1] * (1.0 - material.opacity);
@@ -394,14 +424,14 @@ euler:
 
   // we have left the sphere of influence and are done with euler's method
   // finally we trace the ray out to infinity
-  if (trace_partial_ray(ray, 1e20, temp_color)) {
+  if (trace_partial_ray(ray, 1e20, temp_color, mode)) {
     memcpy(color, temp_color, sizeof(Color));
   }
 
 }
 
 // Traces a ray up to a maximum distance of "limit"
-bool RayTracer::trace_partial_ray(const Ray &ray, const double limit, Color color) {
+bool RayTracer::trace_partial_ray(const Ray &ray, const double limit, Color color, const int mode) {
   color[0] = 0;
   color[1] = 0;
   color[2] = 0;
@@ -422,18 +452,41 @@ bool RayTracer::trace_partial_ray(const Ray &ray, const double limit, Color colo
   if (intersection_found == false)
     return false;
 
-  const float diff = MAX(0.0f, material.diffuse * -(material.normal * material.lighting));
 
-  color[0] = material.color[0] * (material.ambient + diff) * material.opacity;
-  color[1] = material.color[1] * (material.ambient + diff) * material.opacity;
-  color[2] = material.color[2] * (material.ambient + diff) * material.opacity;
+  color[0] = material.color[0] * material.ambient * material.opacity;
+  color[1] = material.color[1] * material.ambient * material.opacity;
+  color[2] = material.color[2] * material.ambient * material.opacity;
+
+  if (mode == EULER_RAY_TRACE || mode == ACCEL_RAY_TRACE) {
+    const float diff = MAX(0.0f, material.diffuse * -(material.normal * material.lighting));
+
+    color[0] += material.color[0] * diff * material.opacity;
+    color[1] += material.color[1] * diff * material.opacity;
+    color[2] += material.color[2] * diff * material.opacity;
+  } else if ((mode == EULER_PATH_TRACE || mode == ACCEL_PATH_TRACE) && material.diffuse > 0.0f) {
+    Ray reflected;
+    Color diff = {0.0f, 0.0f, 0.0f};
+    for (int i = 0; i < diffuse_samples; i++) {
+      reflected.D = Vector3d::rand_weighted_unit_vec_in_hemisphere(material.normal);
+      reflected.O = (ray.O + ray.D * max_t) + reflected.D * EPSILON;
+      trace_partial_ray(reflected, limit - max_t - EPSILON, temp_color, mode);
+      //const double cos_theta = reflected.D * material.normal;
+      diff[0] += (temp_color[0] / 255.0f) * material.color[0] * material.diffuse * material.opacity * M_PI;
+      diff[1] += (temp_color[1] / 255.0f) * material.color[1] * material.diffuse * material.opacity * M_PI;
+      diff[2] += (temp_color[2] / 255.0f) * material.color[2] * material.diffuse * material.opacity * M_PI;
+    }
+
+    color[0] += diff[0] / diffuse_samples;
+    color[1] += diff[1] / diffuse_samples;
+    color[2] += diff[2] / diffuse_samples;
+  }
 
   if (material.specular > 0.0f) {
     Ray reflected;
     reflected.O = ray.O + ray.D * max_t;
     reflected.D = ray.D - material.normal * 2.0 * (ray.D * material.normal);
     reflected.O = reflected.O + reflected.D * EPSILON;
-    if (trace_partial_ray(reflected, limit - max_t - EPSILON, temp_color)) {
+    if (trace_partial_ray(reflected, limit - max_t - EPSILON, temp_color, mode)) {
       color[0] += temp_color[0] * material.specular;
       color[1] += temp_color[1] * material.specular;
       color[2] += temp_color[2] * material.specular;
@@ -444,7 +497,7 @@ bool RayTracer::trace_partial_ray(const Ray &ray, const double limit, Color colo
     return true;
 
   Ray newRay = Ray(ray.O + ray.D * (max_t + EPSILON), ray.D);
-  if (trace_partial_ray(newRay, limit - max_t - EPSILON, temp_color)) {
+  if (trace_partial_ray(newRay, limit - max_t - EPSILON, temp_color, mode)) {
 
     color[0] += temp_color[0] * (1.0 - material.opacity);
     color[1] += temp_color[1] * (1.0 - material.opacity);

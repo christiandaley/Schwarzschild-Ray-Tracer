@@ -2,8 +2,9 @@
 #include "Scene.h"
 
 #define EULER_RAY_TRACE 0
-#define ACCEL_RAY_TRACE 1
-#define ACCEL_PATH_TRACE 2
+#define EULER_PATH_TRACE 1
+#define ACCEL_RAY_TRACE 2
+#define ACCEL_PATH_TRACE 3
 
 class RayTracer {
   static Scene *scene;
@@ -14,8 +15,8 @@ class RayTracer {
   static void render_section(const int xmin, const int ymin, const int width, const int height,
                             const double dt, const double soi_range, const int mode);
   static void accel_ray_trace(Ray &ray, const double dt, const Sphere &range, Color color, const int mode);
-  static void euler_ray_trace(Ray &ray, const double dt, const Sphere &range, Color color);
-  static bool trace_partial_ray(const Ray &ray, const double limit, Color color);
+  static void euler_ray_trace(Ray &ray, const double dt, const Sphere &range, Color color, const int mode);
+  static bool trace_partial_ray(const Ray &ray, const double limit, Color color, const int mode);
 
   static void delete_buffer();
   static void init_buffer();
