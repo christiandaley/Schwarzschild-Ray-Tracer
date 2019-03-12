@@ -14,6 +14,8 @@ void accretion_disk1();
 
 int main(int argc, char **argv) {
   srand(time(NULL));
+  /* Uncomment a scene and re-compile in order to render it */
+
   //simple_scene1();
   //einstein_ring1();
   //accretion_disk1();
@@ -23,7 +25,7 @@ int main(int argc, char **argv) {
   //orbit3();
   //orbit4();
   //orbit5();
-  accretion_disk2();
+  //accretion_disk2();
   //accretion_disk3();
   //accretion_disk4();
 

@@ -12,20 +12,9 @@ const double rs = 100.0;
 const double jump_dist = 0.05;
 const int INC_PER_STEP = 100;
 
-Metric metric = Metric(100.0, Point3d());
+static const Metric metric = Metric(100.0, Point3d());
 
 int main(int argv, char **argc) {
-  /*metric.allow_interior_step = true;
-  Ray ray = Ray(Point3d(-150.0, 0.0, 0.0), Vector3d(0.01, 1.0, 0.0).normalize());
-  //Ray ray = Ray(Point3d(0.0, 0.0, 0.0), Vector3d(1.0, 0.0, 0.0).normalize());
-  for (int i = 0; i < 1000000; i++) {
-    metric.step(0.001, ray);
-  }
-
-  ray.print();
-  std::cout << ray.O.mag() << std::endl;
-  const double alpha = acos(ray.D * ray.O * (1.0 / ray.O.mag()));
-  std::cout << RAD_2_DEG(alpha) << std::endl;*/
 
   sample();
 

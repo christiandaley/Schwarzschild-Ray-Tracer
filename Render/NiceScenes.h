@@ -1,6 +1,6 @@
 #pragma once
 
-void planet1s();
+void planets1();
 void orbit1();
 void orbit2();
 void orbit3();

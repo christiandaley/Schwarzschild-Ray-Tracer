@@ -431,6 +431,7 @@ void orbit1() {
   Background bg = Background(Point3d(), 1e9, "Textures/stars2.png");
 
   Sphere sun = Sphere(Point3d(-2.0 * rs, 0.0, 0.0), 2.32, "Textures/sun2k.png");
+  sun.material.ambient = 2.5f;
 
   s.addObject(bg);
   s.addObject(sun);
@@ -438,9 +439,9 @@ void orbit1() {
   RayTracer::load_scene(s);
   LightPath::LoadModel();
 
-  const int fps = 24;
-  double speedup = 10.0;
-  const int nf = 12000 / speedup;
+  const int fps = 3;
+  const int duration = 500;
+  const int nf = fps * duration;
   char filename[128];
 
   double v = sqrt(rs / (2.0 * (sun.origin.mag() - rs)));
@@ -455,24 +456,24 @@ void orbit1() {
     Timer t;
 
 
-    //RayTracer::render(rs / 100.0, 29.9, ACCEL_RAY_TRACE, 32);
-    //std::cout << "Rendered frame " << i << " in ";
-    //t.print_elapsed_time();
-    //RayTracer::write(filename);
+    RayTracer::render(rs / 100.0, 29.9, ACCEL_RAY_TRACE, 32);
+    std::cout << "Rendered frame " << i << " in ";
+    t.print_elapsed_time();
+    RayTracer::write(filename);
 
-    s.metric.timelike_step(speedup / fps, 0.01, sun_velocity);
+    s.metric.timelike_step(1.0 / fps, 0.0001, sun_velocity);
     sun.origin = sun_velocity.O;
   }
 
-  sun.origin.print();
-  sun.origin.print_norm();
+  //sun.origin.print();
+  //sun.origin.print_norm();
 
   std::cout << "Finished rendering frames." << std::endl;
   std::cout << "Total render time: ";
   total.print_elapsed_time();
 }
 
-void planet1s() {
+void planets1() {
   const double fov = 25.0;
   Scene s = Scene();
   Point3d pos = Point3d(-9.5, 3.0, 42.0);
@@ -486,13 +487,12 @@ void planet1s() {
   s.metric.rs = 5.0;
 
   //Background bg = Background(Point3d(), 1e9, "Textures/stars2.png");
-
   Disk disk = Disk(Point3d(), Vector3d(-0.15, 1.0, 0.0), Vector3d(1.0, 0.0, 0.0), 12.5, 50.0, "Textures/adisk3.png");
 
   Sphere planet = Sphere(Point3d(-11.0, 3.0, 40.0), 0.25, "Textures/mars2k.png");
   planet.setAxis(-IN, RIGHT);
   planet.material.ambient = 0.0f;
-  planet.material.diffuse = 2.0f;
+  planet.material.diffuse = 2.5f;
 
   s.addObject(planet);
   //s.addObject(bg);
@@ -504,20 +504,20 @@ void planet1s() {
   LightPath::LoadModel();
 
   Timer t;
-  RayTracer::render(0.2, 29.9, ACCEL_PATH_TRACE, 32);
+
+  RayTracer::render(0.05, 29.9, ACCEL_PATH_TRACE, 32);
   std::cout << "Rendered in ";
   t.print_elapsed_time();
 
   PostProcessor::Bloom(RayTracer::pixel_buffer, camera.xres, camera.yres, 50.0, 2.0, 4.0);
   RayTracer::write("Renders/Planets1/planets1-1.png");
-  return;
 
   planet.load_tx("Textures/ice.png");
-  planet.material.diffuse = 1.0f;
-  planet.material.specular = 0.35f;
+  planet.material.diffuse = 1.5f;
+  planet.material.specular = 0.3f;
 
   t.reset();
-  RayTracer::render(0.2, 29.9, ACCEL_PATH_TRACE, 32);
+  RayTracer::render(0.05, 29.9, ACCEL_PATH_TRACE, 32);
   std::cout << "Rendered in ";
   t.print_elapsed_time();
 
