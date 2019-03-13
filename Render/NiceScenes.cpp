@@ -308,7 +308,7 @@ void orbit3() {
   //earth.material.diffuse = 1.0f;
 
   Background bg = Background(Point3d(), 1e9, "Textures/stars2.png");
-  bg.material.ambient = 0.5f;
+  bg.material.ambient = 0.75f;
 
   s.addObject(earth);
   s.addObject(bg);
@@ -372,7 +372,7 @@ void orbit2() {
   //earth.material.diffuse = 1.0f;
 
   Background bg = Background(Point3d(), 1e9, "Textures/stars2.png");
-  bg.material.ambient = 0.5f;
+  bg.material.ambient = 0.75f;
 
   s.addObject(earth);
   s.addObject(bg);
